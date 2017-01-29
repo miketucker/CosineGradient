@@ -1,19 +1,16 @@
 using UnityEngine;
 
-namespace Klak.Chromatics {
+namespace Klak.Chromatics 
+{
     /// Cosine gradient object
     [CreateAssetMenu(order = 1000)]
     public class CosineGradient : ScriptableObject {
         #region Serialized fields
 
-        [SerializeField]
-        Vector4 _redCoeffs = new Vector4(0.5f, 0.5f, 1, 0);
-        [SerializeField]
-        Vector4 _greenCoeffs = new Vector4(0.5f, 0.5f, 1, 0.333f);
-        [SerializeField]
-        Vector4 _blueCoeffs = new Vector4(0.5f, 0.5f, 1, 0.665f);
-        [SerializeField]
-        bool _invert = false;
+        [SerializeField] Vector4 _redCoeffs = new Vector4(0.5f, 0.5f, 1, 0);
+        [SerializeField] Vector4 _greenCoeffs = new Vector4(0.5f, 0.5f, 1, 0.333f);
+        [SerializeField] Vector4 _blueCoeffs = new Vector4(0.5f, 0.5f, 1, 0.665f);
+        [SerializeField] bool _invert = false;
         #endregion
 
         #region Public accessors
