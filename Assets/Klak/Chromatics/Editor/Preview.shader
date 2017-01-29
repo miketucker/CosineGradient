@@ -9,6 +9,7 @@ Shader "Hidden/Klak/Chromatics/CosineGradient/Preview"
     half3 _CoeffsB;
     half3 _CoeffsC;
     half3 _CoeffsD;
+    half _invert;
 
     struct v2f
     {
@@ -21,6 +22,12 @@ Shader "Hidden/Klak/Chromatics/CosineGradient/Preview"
         half t = i.uv.x;
 
         half3 rgb = saturate(_CoeffsA + _CoeffsB * cos(_CoeffsC * t + _CoeffsD));
+
+        if (_invert > 0.0) {
+            rgb.r = 1.0 - rgb.r;
+            rgb.g = 1.0 - rgb.g;
+            rgb.b = 1.0 - rgb.b;
+        }
 
         #if !defined(UNITY_COLORSPACE_GAMMA)
         rgb = GammaToLinearSpace(rgb);

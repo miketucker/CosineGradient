@@ -1,3 +1,4 @@
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -14,7 +15,11 @@ namespace Klak.Chromatics
         SerializedProperty _greenCoeffs;
         SerializedProperty _blueCoeffs;
 
-        [SerializeField] Shader _previewShader;
+        SerializedProperty _invert;
+
+
+        [SerializeField]
+        Shader _previewShader;
 
         void OnEnable()
         {
@@ -24,6 +29,7 @@ namespace Klak.Chromatics
             _redCoeffs = serializedObject.FindProperty("_redCoeffs");
             _greenCoeffs = serializedObject.FindProperty("_greenCoeffs");
             _blueCoeffs = serializedObject.FindProperty("_blueCoeffs");
+            _invert = serializedObject.FindProperty("_invert");
         }
 
         void OnDisable()
@@ -43,11 +49,57 @@ namespace Klak.Chromatics
 
             EditorGUILayout.Space();
 
+
             ShowSliders("Red", _redCoeffs);
             ShowSliders("Green", _greenCoeffs);
             ShowSliders("Blue", _blueCoeffs);
 
+            _invert.boolValue = EditorGUILayout.Toggle("Invert", _invert.boolValue);
+
+            EditorGUILayout.Space();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Export Texture: ");
+
+            if (GUILayout.Button("256")) {
+                Export(256);
+            }
+
+            if (GUILayout.Button("512")) {
+                Export(512);
+            }
+
+            if (GUILayout.Button("1024")) {
+                Export(1024);
+            }
+
+            GUILayout.EndHorizontal();
             serializedObject.ApplyModifiedProperties();
+        }
+
+        void Export(int width)
+        {
+            var cg = target as CosineGradient;
+            var t = new Texture2D(width, 1);
+            t.name = cg.name + "-" + width;
+            for (int i = 0; i < width; i++) {
+                t.SetPixel(i, 0, cg.Evaluate(1f * i / width));
+            }
+            t.Apply();
+
+            var path = EditorUtility.SaveFilePanelInProject("Save texture as PNG",
+                                    t.name + ".png",
+                                    "png",
+                                    "Please enter a file name to save the texture to");
+            if (path.Length != 0) {
+                var pngData = t.EncodeToPNG();
+                if (pngData != null) {
+                    File.WriteAllBytes(path, pngData);
+                    // As we are saving to the asset folder, tell Unity to scan for modified or new assets
+                    AssetDatabase.Refresh();
+                }
+            }
+
         }
 
         void ShowSliders(string label, SerializedProperty prop)
@@ -91,19 +143,20 @@ namespace Klak.Chromatics
             DrawLine(0.75f, 0, 0.75f, 1, lineColor);
 
             // R/G/B curves
-            DrawGradientCurve(grad.redCoeffs, Color.red);
-            DrawGradientCurve(grad.greenCoeffs, Color.green);
-            DrawGradientCurve(grad.blueCoeffs, Color.blue);
+            DrawGradientCurve(grad, grad.redCoeffs, Color.red);
+            DrawGradientCurve(grad, grad.greenCoeffs, Color.green);
+            DrawGradientCurve(grad, grad.blueCoeffs, Color.blue);
         }
 
-        void DrawGradientCurve(Vector4 coeffs, Color color)
+        void DrawGradientCurve(CosineGradient grad, Vector4 coeffs, Color color)
         {
-            for (var i = 0; i < _curveResolution; i++)
-            {
+
+            for (var i = 0; i < _curveResolution; i++) {
                 var x = (float)i / (_curveResolution - 1);
                 var theta = (coeffs.z * x + coeffs.w) * Mathf.PI * 2;
                 var y = coeffs.x + coeffs.y * Mathf.Cos(theta);
-                _curveVertices[i] = PointInRect(x, Mathf.Clamp01(y));
+
+                _curveVertices[i] = PointInRect(x, Mathf.Clamp01((grad.invert) ? 1f - y : y));
             }
 
             Handles.color = color;
@@ -182,6 +235,7 @@ namespace Klak.Chromatics
             _material.SetVector("_CoeffsB", grad.coeffsB);
             _material.SetVector("_CoeffsC", grad.coeffsC2);
             _material.SetVector("_CoeffsD", grad.coeffsD2);
+            _material.SetFloat("_invert", (grad.invert) ? 1f : 0f);
 
             EditorGUI.DrawPreviewTexture(
                 GUILayoutUtility.GetRect(128, 32),

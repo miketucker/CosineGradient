@@ -1,20 +1,26 @@
-﻿using UnityEngine;
+using UnityEngine;
 
-namespace Klak.Chromatics
-{
+namespace Klak.Chromatics {
     /// Cosine gradient object
     [CreateAssetMenu(order = 1000)]
-    public class CosineGradient : ScriptableObject
-    {
+    public class CosineGradient : ScriptableObject {
         #region Serialized fields
 
-        [SerializeField] Vector4 _redCoeffs   = new Vector4(0.5f, 0.5f, 1, 0);
-        [SerializeField] Vector4 _greenCoeffs = new Vector4(0.5f, 0.5f, 1, 0.333f);
-        [SerializeField] Vector4 _blueCoeffs  = new Vector4(0.5f, 0.5f, 1, 0.665f);
-
+        [SerializeField]
+        Vector4 _redCoeffs = new Vector4(0.5f, 0.5f, 1, 0);
+        [SerializeField]
+        Vector4 _greenCoeffs = new Vector4(0.5f, 0.5f, 1, 0.333f);
+        [SerializeField]
+        Vector4 _blueCoeffs = new Vector4(0.5f, 0.5f, 1, 0.665f);
+        [SerializeField]
+        bool _invert = false;
         #endregion
 
         #region Public accessors
+
+        public bool invert {
+            get { return _invert; }
+        }
 
         /// Packed coefficients of the red component (A, B, C, D).
         public Vector4 redCoeffs {
@@ -73,14 +79,21 @@ namespace Klak.Chromatics
         #region Public methods
 
         /// Evaluate a color at a given point in the gradient.
-        public Color Evaluate(float t)
-        {
-            var r = Mathf.Cos((  _redCoeffs.z * t +   _redCoeffs.w) * Mathf.PI * 2);
+        public Color Evaluate(float t) {
+            var r = Mathf.Cos((_redCoeffs.z * t + _redCoeffs.w) * Mathf.PI * 2);
             var g = Mathf.Cos((_greenCoeffs.z * t + _greenCoeffs.w) * Mathf.PI * 2);
-            var b = Mathf.Cos(( _blueCoeffs.z * t +  _blueCoeffs.w) * Mathf.PI * 2);
-            r = Mathf.Clamp01(  _redCoeffs.x +   _redCoeffs.y * r);
+            var b = Mathf.Cos((_blueCoeffs.z * t + _blueCoeffs.w) * Mathf.PI * 2);
+
+            r = Mathf.Clamp01(_redCoeffs.x + _redCoeffs.y * r);
             g = Mathf.Clamp01(_greenCoeffs.x + _greenCoeffs.y * g);
-            b = Mathf.Clamp01( _blueCoeffs.x +  _blueCoeffs.y * b);
+            b = Mathf.Clamp01(_blueCoeffs.x + _blueCoeffs.y * b);
+
+            if (_invert) {
+                r = 1f - r;
+                g = 1f - g;
+                b = 1f - b;
+            }
+
             return new Color(r, g, b);
         }
 
